@@ -1,6 +1,6 @@
 {% set name = "nest-simulator" %}
 {% set version = "3.10" %}
-{% set build = 0 %}
+{% set build = 1 %}
 
 package:
   name: {{ name|lower }}
@@ -9,6 +9,10 @@ package:
 source:
   url: https://github.com/nest/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
   sha256: fd4def89c109e19d50e4630ab56bb9ddd4f15bf0ef735070189f0a83e2416a55
+  patches:
+    # nest/nest-simulator#3816 (in main, not in v3.10): add IteratorPair::operator[].
+    # Without it, extension modules with synapse models do not compile with libc++ >= 22.
+    - patches/0001-Implement-operator-for-IteratorPair.patch
 
 build:
   number: {{ build }}
@@ -83,6 +87,9 @@ test:
     - cppcheck
   imports:
     - nest
+  commands:
+    # nest/nest-simulator#3816: the installed IteratorPair must declare operator[].
+    - grep -F -q "operator[]( DifferenceType n ) const" "${PREFIX}/include/nest/iterator_pair.h"  # [unix]
 
 
 about:
